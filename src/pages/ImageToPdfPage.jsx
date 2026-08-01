@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { setPageMeta } from '../seo';
 import { getApiUrl } from '../config';
+import { triggerHilltopAdsPopunder } from '../hilltopads';
 
 function ImageToPdfPage() {
   useEffect(() => {
@@ -137,6 +138,14 @@ function ImageToPdfPage() {
       return 'PNG';
     }
     return 'JPEG';
+  };
+
+  const handleDownloadClick = async () => {
+    if (!downloadUrlRef.current) {
+      return;
+    }
+
+    await triggerHilltopAdsPopunder();
   };
 
   const startConversion = async () => {
@@ -341,7 +350,7 @@ function ImageToPdfPage() {
         <div className="result-actions">
           <button type="button" className="button-primary" onClick={startConversion} disabled={isConverting}>Convert to PDF</button>
           {downloadUrl && (
-            <a className="button-secondary" href={downloadUrl} download={downloadName}>
+            <a className="button-secondary" href={downloadUrl} download={downloadName} onClick={handleDownloadClick}>
               Download PDF
             </a>
           )}

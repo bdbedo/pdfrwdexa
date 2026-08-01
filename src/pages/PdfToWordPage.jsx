@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { setPageMeta } from '../seo';
 import { getApiUrl } from '../config';
+import { triggerHilltopAdsPopunder } from '../hilltopads';
 
 function PdfToWordPage() {
   useEffect(() => {
@@ -52,6 +53,14 @@ function PdfToWordPage() {
       setDownloadUrl('');
       setDownloadName('');
     }
+  };
+
+  const handleDownloadClick = async () => {
+    if (!downloadUrl) {
+      return;
+    }
+
+    await triggerHilltopAdsPopunder();
   };
 
   const startConversion = async () => {
@@ -193,7 +202,7 @@ function PdfToWordPage() {
         <div className="result-actions">
           <button type="button" className="button-primary" onClick={startConversion} disabled={isConverting}>Convert file</button>
           {downloadUrl && (
-            <a className="button-secondary" href={downloadUrl} download={downloadName}>
+            <a className="button-secondary" href={downloadUrl} download={downloadName} onClick={handleDownloadClick}>
               Download DOCX
             </a>
           )}

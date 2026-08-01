@@ -1,4 +1,1 @@
-User-agent: *
-Allow: /
-
 Sitemap: https://pdfrwdexa.vercel.app/sitemap.xml

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { setPageMeta } from '../seo';
+import { getApiUrl } from '../config';
 
 function ImageToPdfPage() {
   useEffect(() => {

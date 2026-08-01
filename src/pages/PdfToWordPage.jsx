@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { setPageMeta } from '../seo';
+import { getApiUrl } from '../config';
 
 function PdfToWordPage() {
   useEffect(() => {
@@ -75,7 +76,7 @@ function PdfToWordPage() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/convert/pdf-to-docx', {
+      const response = await fetch(getApiUrl('/api/convert/pdf-to-docx'), {
         method: 'POST',
         body: formData,
       });

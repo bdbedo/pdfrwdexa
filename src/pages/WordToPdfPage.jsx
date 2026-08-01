@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { setPageMeta } from '../seo';
+import { getApiUrl } from '../config';
 
 function WordToPdfPage() {
   useEffect(() => {
@@ -75,7 +76,7 @@ function WordToPdfPage() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/convert/word-to-pdf', {
+      const response = await fetch(getApiUrl('/api/convert/word-to-pdf'), {
         method: 'POST',
         body: formData,
       });

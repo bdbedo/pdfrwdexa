@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#07111f"/>
+  <rect x="88" y="88" width="1024" height="454" rx="38" fill="#101c31" stroke="#2a3655" stroke-width="4"/>
+  <path d="M208 244h200a56 56 0 0 1 56 56v88a56 56 0 0 1-56 56H208z" fill="#44d4b6"/>
+  <path d="M260 292h112v40H260zM260 356h96v40H260z" fill="#06131e"/>
+  <path d="M472 244h164l90 90v144H472z" fill="#6f78ff"/>
+  <text x="208" y="478" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="700">PDFRWDEXA</text>
+  <text x="208" y="530" fill="#9fb0c5" font-family="Inter, Arial, sans-serif" font-size="30">Fast, reliable document conversion</text>
+</svg>

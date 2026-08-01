@@ -6,6 +6,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execFile as execFilePromise } from 'child_process';
+import { promisify } from 'util';
+
+const execFileAsync = promisify(execFilePromise);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +32,6 @@ app.post('/api/convert/word-to-pdf', upload.single('file'), (req, res) => {
 
   const inputPath = req.file.path;
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-'));
-  const sourceName = path.basename(req.file.originalname, path.extname(req.file.originalname));
 
   const libreOfficeBinary = process.env.LIBREOFFICE_PATH || 'libreoffice';
   const commandArgs = [
@@ -47,8 +50,6 @@ app.post('/api/convert/word-to-pdf', upload.single('file'), (req, res) => {
       return res.status(500).json({ error: 'We could not convert this document. Please try another file.' });
     }
 
-    console.log('LibreOffice conversion output', { stdout, stderr });
-
     const generatedPdfPath = fs
       .readdirSync(outputDir)
       .map((entry) => path.join(outputDir, entry))
@@ -64,6 +65,30 @@ app.post('/api/convert/word-to-pdf', upload.single('file'), (req, res) => {
       fs.rmSync(inputPath, { force: true });
     });
   });
+});
+
+app.post('/api/convert/pdf-to-docx', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Please upload a PDF document.' });
+  }
+
+  const inputPath = req.file.path;
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-pdf-'));
+  const outputPath = path.join(outputDir, 'converted.docx');
+  const scriptPath = path.join(__dirname, 'scripts', 'convert_pdf_to_docx.py');
+
+  try {
+    await execFileAsync('python3', [scriptPath, inputPath, outputPath]);
+
+    res.download(outputPath, 'converted.docx', () => {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+      fs.rmSync(inputPath, { force: true });
+    });
+  } catch (conversionError) {
+    fs.rmSync(outputDir, { recursive: true, force: true });
+    fs.rmSync(inputPath, { force: true });
+    res.status(500).json({ error: 'We could not convert this PDF to a DOCX file. Please try another document.' });
+  }
 });
 
 app.get('/health', (_req, res) => {

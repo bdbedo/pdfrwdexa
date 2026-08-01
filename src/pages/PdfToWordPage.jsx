@@ -17,6 +17,8 @@ function PdfToWordPage() {
   const [progress, setProgress] = useState(0);
   const [isConverting, setIsConverting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadName, setDownloadName] = useState('');
 
   const acceptedTypes = useMemo(() => ['.pdf'], []);
 
@@ -44,9 +46,14 @@ function PdfToWordPage() {
     setStatus('Ready to convert');
     setProgress(0);
     setIsSuccess(false);
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl('');
+      setDownloadName('');
+    }
   };
 
-  const startConversion = () => {
+  const startConversion = async () => {
     if (!file) {
       setError('Choose a PDF file to begin.');
       return;
@@ -56,28 +63,56 @@ function PdfToWordPage() {
     setError('');
     setStatus('Analyzing document structure');
     setIsSuccess(false);
+    setProgress(10);
 
-    const interval = window.setInterval(() => {
-      setProgress((current) => {
-        if (current >= 100) {
-          window.clearInterval(interval);
-          setIsConverting(false);
-          setStatus('Structure prepared');
-          setIsSuccess(true);
-          return 100;
-        }
-        return current + 10;
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl('');
+      setDownloadName('');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/convert/pdf-to-docx', {
+        method: 'POST',
+        body: formData,
       });
-    }, 240);
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'We could not convert this PDF right now.');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setDownloadUrl(objectUrl);
+      setDownloadName(`pdfrwdexa-${Date.now()}.docx`);
+      setProgress(100);
+      setStatus('DOCX ready for download');
+      setIsSuccess(true);
+    } catch (conversionError) {
+      setError(conversionError.message || 'We could not complete the conversion.');
+      setStatus('Conversion failed');
+      setProgress(0);
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const reset = () => {
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+    }
     setFile(null);
     setProgress(0);
     setStatus('Ready to convert');
     setError('');
     setIsConverting(false);
     setIsSuccess(false);
+    setDownloadUrl('');
+    setDownloadName('');
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -133,22 +168,27 @@ function PdfToWordPage() {
       <div className="panel">
         <div className="status-box">
           <strong>Conversion status</strong>
-          <div className={`success ${!isSuccess ? 'hidden' : ''}`}>Document structure prepared for conversion.</div>
+          <div className={`success ${!isSuccess ? 'hidden' : ''}`}>A structured DOCX has been generated successfully.</div>
           <div className={`error ${!error ? 'hidden' : ''}`}>{error}</div>
           <div className="progress-bar" aria-hidden="true">
             <span style={{ width: `${progress}%` }} />
           </div>
-          <div className="preview-caption">{isConverting ? 'Assessing layout and structure…' : 'Ready for conversion.'}</div>
+          <div className="preview-caption">{isConverting ? 'Analyzing the PDF structure…' : 'Ready for conversion.'}</div>
         </div>
         <div className="result-actions">
           <button type="button" className="button-primary" onClick={startConversion} disabled={isConverting}>Convert file</button>
+          {downloadUrl && (
+            <a className="button-secondary" href={downloadUrl} download={downloadName}>
+              Download DOCX
+            </a>
+          )}
           <button type="button" className="button-ghost" onClick={reset}>Convert another file</button>
         </div>
       </div>
 
       <div className="panel">
-        <h2 className="section-title">Professional note</h2>
-        <p className="section-subtitle">This page is architected for a professional PDF-to-DOCX engine with future OCR support for scanned files.</p>
+        <h2 className="section-title">Privacy note</h2>
+        <p className="section-subtitle">PDFs are processed locally in the conversion service and are not stored permanently.</p>
       </div>
     </section>
   );

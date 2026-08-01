@@ -17,31 +17,58 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3001;
 
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+const defaultOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+];
+
+const configuredOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  },
   credentials: true,
 }));
 app.use(express.json());
+
+const isSupportedUpload = (file) => {
+  const originalName = file.originalname || '';
+  const extension = path.extname(originalName).toLowerCase();
+  const mimeType = file.mimetype || '';
+
+  if (extension === '.pdf') {
+    return mimeType === '' || mimeType === 'application/pdf' || mimeType === 'application/octet-stream';
+  }
+
+  if (extension === '.doc' || extension === '.docx') {
+    return mimeType === ''
+      || mimeType === 'application/msword'
+      || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      || mimeType === 'application/octet-stream'
+      || mimeType === 'application/zip';
+  }
+
+  return false;
+};
 
 const upload = multer({
   dest: os.tmpdir(),
   limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (_req, file, callback) => {
-    const originalName = file.originalname || '';
-    const extension = path.extname(originalName).toLowerCase();
-    const mimeType = file.mimetype || '';
-
-    if (extension === '.pdf' && mimeType === 'application/pdf') {
-      callback(null, true);
-      return;
-    }
-
-    if ((extension === '.doc' || extension === '.docx') && (mimeType === 'application/msword' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+    if (isSupportedUpload(file)) {
       callback(null, true);
       return;
     }
@@ -139,6 +166,34 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(port, () => {
-  console.log(`PDFRWDEXA conversion server listening on port ${port}`);
+app.use((error, _req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      res.status(413).json({ error: 'The uploaded file is too large. Maximum size is 25 MB.' });
+      return;
+    }
+
+    res.status(400).json({ error: 'The upload failed. Please try again with a valid file.' });
+    return;
+  }
+
+  if (error && error.message === 'Unsupported file type.') {
+    res.status(400).json({ error: 'Unsupported file type. Please upload a .pdf, .doc, or .docx file.' });
+    return;
+  }
+
+  if (error) {
+    res.status(500).json({ error: 'We could not process your request. Please try again.' });
+    return;
+  }
+
+  next();
 });
+
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  app.listen(port, () => {
+    console.log(`PDFRWDEXA conversion server listening on port ${port}`);
+  });
+}
+
+export { app, isSupportedUpload };

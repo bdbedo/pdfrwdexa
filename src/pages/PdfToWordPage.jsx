@@ -55,12 +55,23 @@ function PdfToWordPage() {
     }
   };
 
-  const handleDownloadClick = async () => {
+  const handleDownloadClick = async (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+
     if (!downloadUrl) {
       return;
     }
 
     await triggerHilltopAdsPopunder();
+
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = downloadName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const startConversion = async () => {

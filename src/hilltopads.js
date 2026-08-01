@@ -92,7 +92,10 @@ export async function triggerHilltopAdsPopunder() {
 
   try {
     if (window.open) {
-      window.open('', '_blank', 'noopener,noreferrer');
+      const popup = window.open('', '_blank', 'noopener,noreferrer');
+      if (popup) {
+        popup.opener = null;
+      }
     }
   } catch {
     // Keep the download flow intact even if the ad trigger fails.

@@ -17,6 +17,8 @@ function WordToPdfPage() {
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadName, setDownloadName] = useState('');
 
   const acceptedTypes = useMemo(() => ['.doc', '.docx'], []);
 
@@ -44,9 +46,14 @@ function WordToPdfPage() {
     setIsSuccess(false);
     setStatus('Ready to convert');
     setProgress(0);
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl('');
+      setDownloadName('');
+    }
   };
 
-  const startConversion = () => {
+  const startConversion = async () => {
     if (!file) {
       setError('Choose a Word document to begin.');
       return;
@@ -54,30 +61,66 @@ function WordToPdfPage() {
 
     setIsConverting(true);
     setError('');
-    setStatus('Preparing conversion');
+    setStatus('Uploading and converting locally on the server');
     setIsSuccess(false);
+    setProgress(10);
 
-    const interval = window.setInterval(() => {
-      setProgress((current) => {
-        if (current >= 100) {
-          window.clearInterval(interval);
-          setIsConverting(false);
-          setStatus('Conversion prepared');
-          setIsSuccess(true);
-          return 100;
-        }
-        return current + 12;
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl('');
+      setDownloadName('');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/convert/word-to-pdf', {
+        method: 'POST',
+        body: formData,
       });
-    }, 220);
+
+      if (!response.ok) {
+        let message = 'We could not convert this document right now.';
+        try {
+          const data = await response.json();
+          if (data?.error) {
+            message = data.error;
+          }
+        } catch (parseError) {
+          message = 'We could not convert this document right now.';
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setDownloadUrl(objectUrl);
+      setDownloadName(`pdfwrdexa-${Date.now()}.pdf`);
+      setProgress(100);
+      setStatus('PDF ready for download');
+      setIsSuccess(true);
+    } catch (conversionError) {
+      setError(conversionError.message || 'We could not complete the conversion.');
+      setStatus('Conversion failed');
+      setProgress(0);
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const reset = () => {
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+    }
     setFile(null);
     setProgress(0);
     setStatus('Ready to convert');
     setError('');
     setIsConverting(false);
     setIsSuccess(false);
+    setDownloadUrl('');
+    setDownloadName('');
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -133,22 +176,27 @@ function WordToPdfPage() {
       <div className="panel">
         <div className="status-box">
           <strong>Conversion status</strong>
-          <div className={`success ${!isSuccess ? 'hidden' : ''}`}>Conversion prepared successfully.</div>
+          <div className={`success ${!isSuccess ? 'hidden' : ''}`}>Your PDF has been generated successfully.</div>
           <div className={`error ${!error ? 'hidden' : ''}`}>{error}</div>
           <div className="progress-bar" aria-hidden="true">
             <span style={{ width: `${progress}%` }} />
           </div>
-          <div className="preview-caption">{isConverting ? 'Processing your document…' : 'Ready for conversion.'}</div>
+          <div className="preview-caption">{isConverting ? 'Converting your Word document…' : 'Ready for conversion.'}</div>
         </div>
         <div className="result-actions">
           <button type="button" className="button-primary" onClick={startConversion} disabled={isConverting}>Convert file</button>
+          {downloadUrl && (
+            <a className="button-secondary" href={downloadUrl} download={downloadName}>
+              Download PDF
+            </a>
+          )}
           <button type="button" className="button-ghost" onClick={reset}>Convert another file</button>
         </div>
       </div>
 
       <div className="panel">
-        <h2 className="section-title">Architecture note</h2>
-        <p className="section-subtitle">This interface is ready for a real backend conversion engine. The next step is to connect a production Word-to-PDF API or service.</p>
+        <h2 className="section-title">Privacy note</h2>
+        <p className="section-subtitle">Word documents are sent to a local conversion service in this environment and are not stored permanently.</p>
       </div>
     </section>
   );

@@ -23,32 +23,67 @@ app.use(express.json());
 const upload = multer({
   dest: os.tmpdir(),
   limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    const originalName = file.originalname || '';
+    const extension = path.extname(originalName).toLowerCase();
+    const mimeType = file.mimetype || '';
+
+    if (extension === '.pdf' && mimeType === 'application/pdf') {
+      callback(null, true);
+      return;
+    }
+
+    if ((extension === '.doc' || extension === '.docx') && (mimeType === 'application/msword' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Unsupported file type.'));
+  },
 });
 
-app.post('/api/convert/word-to-pdf', upload.single('file'), (req, res) => {
+const sanitizeFilename = (originalName) => {
+  const baseName = path.basename(originalName || 'upload').replace(/[^a-zA-Z0-9._-]/g, '-');
+  const safeBaseName = baseName || 'upload';
+  const extension = path.extname(safeBaseName).toLowerCase();
+  const nameWithoutExtension = path.basename(safeBaseName, extension) || 'upload';
+  return `${Date.now()}-${nameWithoutExtension}${extension}`;
+};
+
+const cleanupPaths = (...paths) => {
+  paths.forEach((entryPath) => {
+    if (!entryPath) {
+      return;
+    }
+    fs.rmSync(entryPath, { recursive: true, force: true });
+  });
+};
+
+app.post('/api/convert/word-to-pdf', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Please upload a Word document.' });
   }
 
-  const inputPath = req.file.path;
-  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-'));
+  const workingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-word-'));
+  const inputPath = path.join(workingDir, sanitizeFilename(req.file.originalname));
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-word-out-'));
 
-  const libreOfficeBinary = process.env.LIBREOFFICE_PATH || 'libreoffice';
-  const commandArgs = [
-    '--headless',
-    '--convert-to',
-    'pdf',
-    '--outdir',
-    outputDir,
-    inputPath,
-  ];
+  try {
+    fs.renameSync(req.file.path, inputPath);
 
-  execFile(libreOfficeBinary, commandArgs, (error, stdout, stderr) => {
-    if (error) {
-      console.error('LibreOffice conversion failed', { error: error.message, stdout, stderr });
-      fs.rmSync(outputDir, { recursive: true, force: true });
-      return res.status(500).json({ error: 'We could not convert this document. Please try another file.' });
-    }
+    const libreOfficeBinary = process.env.LIBREOFFICE_PATH || 'libreoffice';
+    await execFileAsync(libreOfficeBinary, ['--version']);
+
+    const commandArgs = [
+      '--headless',
+      '--convert-to',
+      'pdf',
+      '--outdir',
+      outputDir,
+      inputPath,
+    ];
+
+    await execFileAsync(libreOfficeBinary, commandArgs);
 
     const generatedPdfPath = fs
       .readdirSync(outputDir)
@@ -56,15 +91,16 @@ app.post('/api/convert/word-to-pdf', upload.single('file'), (req, res) => {
       .find((candidate) => candidate.toLowerCase().endsWith('.pdf'));
 
     if (!generatedPdfPath) {
-      fs.rmSync(outputDir, { recursive: true, force: true });
-      return res.status(500).json({ error: 'The PDF could not be created.' });
+      throw new Error('The PDF could not be created.');
     }
 
-    res.download(generatedPdfPath, 'converted.pdf', () => {
-      fs.rmSync(outputDir, { recursive: true, force: true });
-      fs.rmSync(inputPath, { force: true });
-    });
-  });
+    res.on('finish', () => cleanupPaths(workingDir, outputDir));
+    res.on('close', () => cleanupPaths(workingDir, outputDir));
+    res.download(generatedPdfPath, 'converted.pdf');
+  } catch (conversionError) {
+    cleanupPaths(workingDir, outputDir);
+    res.status(500).json({ error: 'We could not convert this document. Please try another file.' });
+  }
 });
 
 app.post('/api/convert/pdf-to-docx', upload.single('file'), async (req, res) => {
@@ -72,21 +108,21 @@ app.post('/api/convert/pdf-to-docx', upload.single('file'), async (req, res) => 
     return res.status(400).json({ error: 'Please upload a PDF document.' });
   }
 
-  const inputPath = req.file.path;
-  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-pdf-'));
+  const workingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-pdf-'));
+  const inputPath = path.join(workingDir, sanitizeFilename(req.file.originalname));
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfrwdexa-pdf-out-'));
   const outputPath = path.join(outputDir, 'converted.docx');
   const scriptPath = path.join(__dirname, 'scripts', 'convert_pdf_to_docx.py');
 
   try {
+    fs.renameSync(req.file.path, inputPath);
     await execFileAsync('python3', [scriptPath, inputPath, outputPath]);
 
-    res.download(outputPath, 'converted.docx', () => {
-      fs.rmSync(outputDir, { recursive: true, force: true });
-      fs.rmSync(inputPath, { force: true });
-    });
+    res.on('finish', () => cleanupPaths(workingDir, outputDir));
+    res.on('close', () => cleanupPaths(workingDir, outputDir));
+    res.download(outputPath, 'converted.docx');
   } catch (conversionError) {
-    fs.rmSync(outputDir, { recursive: true, force: true });
-    fs.rmSync(inputPath, { force: true });
+    cleanupPaths(workingDir, outputDir);
     res.status(500).json({ error: 'We could not convert this PDF to a DOCX file. Please try another document.' });
   }
 });

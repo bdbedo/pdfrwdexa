@@ -8,8 +8,6 @@ import fitz
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Inches, Pt
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
 
 
 def _safe_text(block: dict) -> str:
@@ -109,50 +107,92 @@ def build_docx_from_pdf(pdf_path: Path, output_path: Path) -> None:
         if page_index > 0:
             doc.add_page_break()
 
-        previous_block_bbox = None
-        previous_font_size = None
+        structured_blocks = []
         for block in blocks:
             if block.get('type', 0) != 0:
                 continue
-
             text = _safe_text(block)
-            if not text:
+            if text:
+                structured_blocks.append({
+                    'text': text,
+                    'bbox': block.get('bbox', [0, 0, 0, 0]),
+                    'lines': _extract_lines(block),
+                })
+
+        left_blocks = [block for block in structured_blocks if block['bbox'][0] < page.rect.width * 0.5]
+        right_blocks = [block for block in structured_blocks if block['bbox'][0] >= page.rect.width * 0.5]
+        ordered_blocks = sorted(left_blocks, key=lambda item: (item['bbox'][1], item['bbox'][0])) + sorted(right_blocks, key=lambda item: (item['bbox'][1], item['bbox'][0]))
+
+        paragraph_blocks = []
+        last_emitted_bottom = None
+        for block in ordered_blocks:
+            if not paragraph_blocks:
+                paragraph_blocks = [block]
                 continue
 
-            lines = _extract_lines(block)
-            if not lines:
+            previous_block = paragraph_blocks[-1]
+            gap = block['bbox'][1] - previous_block['bbox'][3]
+            same_column = abs(block['bbox'][0] - previous_block['bbox'][0]) < 36
+            should_continue_paragraph = gap <= 14 and same_column
+            if should_continue_paragraph:
+                paragraph_blocks.append(block)
                 continue
 
-            font_sizes = [span['size'] for line in lines for span in line['spans']]
-            average_size = sum(font_sizes) / len(font_sizes) if font_sizes else 11
-            block_bbox = block.get('bbox', [0, 0, 0, 0])
+            if last_emitted_bottom is not None:
+                gap_before = paragraph_blocks[0]['bbox'][1] - last_emitted_bottom
+            else:
+                gap_before = 0
+
             paragraph = doc.add_paragraph()
-            paragraph.paragraph_format.space_after = Pt(6)
+            paragraph.paragraph_format.space_after = Pt(4)
             paragraph.paragraph_format.line_spacing = 1.15
             paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-            paragraph.paragraph_format.left_indent = Pt(0)
+            paragraph.paragraph_format.left_indent = Pt(min(18, max(0, (paragraph_blocks[0]['bbox'][0] - 72) / 8)))
+            paragraph.paragraph_format.space_before = Pt(8 if gap_before > 18 else 2)
 
-            block_y = block_bbox[1]
-            if previous_block_bbox and (previous_block_bbox[1] - block_bbox[1]) > 40:
-                paragraph.paragraph_format.space_before = Pt(10)
-            else:
-                paragraph.paragraph_format.space_before = Pt(0)
+            paragraph_text = ' '.join(block_entry['text'] for block_entry in paragraph_blocks)
+            font_sizes = [span['size'] for block_entry in paragraph_blocks for line in block_entry['lines'] for span in line['spans']]
+            average_size = sum(font_sizes) / len(font_sizes) if font_sizes else 11
 
-            if _detect_list_type(text):
-                paragraph.style = 'List Bullet' if _detect_list_type(text) == 'bullet' else 'List Number'
+            if _detect_list_type(paragraph_text):
+                paragraph.style = 'List Bullet' if _detect_list_type(paragraph_text) == 'bullet' else 'List Number'
                 paragraph.paragraph_format.left_indent = Pt(18)
-                paragraph.add_run(text.lstrip('-•').lstrip())
+                paragraph.add_run(paragraph_text.lstrip('-•').lstrip())
             else:
-                run = paragraph.add_run(text)
+                run = paragraph.add_run(paragraph_text)
                 run.font.size = Pt(max(10.5, round(average_size * 0.9, 1)))
-                if _is_probable_heading(text, average_size, block_bbox, page.rect.height, previous_block_bbox, previous_font_size):
+                if _is_probable_heading(paragraph_text, average_size, paragraph_blocks[0]['bbox'], page.rect.height, None, None):
                     run.bold = True
                     paragraph.style = 'Heading 1' if average_size >= 15 else 'Heading 2'
                     paragraph.paragraph_format.space_before = Pt(10)
                     paragraph.paragraph_format.space_after = Pt(4)
 
-            previous_block_bbox = block_bbox
-            previous_font_size = average_size
+            last_emitted_bottom = paragraph_blocks[-1]['bbox'][3]
+            paragraph_blocks = [block]
+
+        if paragraph_blocks:
+            paragraph = doc.add_paragraph()
+            paragraph.paragraph_format.space_after = Pt(4)
+            paragraph.paragraph_format.line_spacing = 1.15
+            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+            paragraph.paragraph_format.left_indent = Pt(min(18, max(0, (paragraph_blocks[0]['bbox'][0] - 72) / 8)))
+            paragraph.paragraph_format.space_before = Pt(8 if last_emitted_bottom is not None and paragraph_blocks[0]['bbox'][1] - last_emitted_bottom > 18 else 2)
+
+            paragraph_text = ' '.join(block_entry['text'] for block_entry in paragraph_blocks)
+            font_sizes = [span['size'] for block_entry in paragraph_blocks for line in block_entry['lines'] for span in line['spans']]
+            average_size = sum(font_sizes) / len(font_sizes) if font_sizes else 11
+            if _detect_list_type(paragraph_text):
+                paragraph.style = 'List Bullet' if _detect_list_type(paragraph_text) == 'bullet' else 'List Number'
+                paragraph.paragraph_format.left_indent = Pt(18)
+                paragraph.add_run(paragraph_text.lstrip('-•').lstrip())
+            else:
+                run = paragraph.add_run(paragraph_text)
+                run.font.size = Pt(max(10.5, round(average_size * 0.9, 1)))
+                if _is_probable_heading(paragraph_text, average_size, paragraph_blocks[0]['bbox'], page.rect.height, None, None):
+                    run.bold = True
+                    paragraph.style = 'Heading 1' if average_size >= 15 else 'Heading 2'
+                    paragraph.paragraph_format.space_before = Pt(10)
+                    paragraph.paragraph_format.space_after = Pt(4)
 
         if page.get_images():
             for img in page.get_images(full=True):

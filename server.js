@@ -22,6 +22,7 @@ const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
+  'https://pdfrwdexa.vercel.app',
 ];
 
 const configuredOrigins = (process.env.FRONTEND_URL || '')
@@ -31,13 +32,30 @@ const configuredOrigins = (process.env.FRONTEND_URL || '')
 
 const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
 
+const isOriginAllowed = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+    const host = parsedOrigin.host.toLowerCase();
+    return allowedOrigins.includes(origin)
+      || host === 'vercel.app'
+      || host.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
       return;
     }
 
+    console.warn('[cors] blocked origin', { origin });
     callback(null, false);
   },
   credentials: true,
@@ -95,6 +113,13 @@ const cleanupPaths = (...paths) => {
 };
 
 app.post('/api/convert/word-to-pdf', upload.single('file'), async (req, res) => {
+  console.log('[convert] word-to-pdf request', {
+    origin: req.get('origin'),
+    contentType: req.get('content-type'),
+    fileName: req.file?.originalname,
+    fileSize: req.file?.size,
+  });
+
   if (!req.file) {
     return res.status(400).json({ error: 'Please upload a Word document.' });
   }
@@ -133,12 +158,23 @@ app.post('/api/convert/word-to-pdf', upload.single('file'), async (req, res) => 
     res.on('close', () => cleanupPaths(workingDir, outputDir));
     res.download(generatedPdfPath, 'converted.pdf');
   } catch (conversionError) {
+    console.error('[convert] word-to-pdf failed', {
+      error: conversionError?.message,
+      stack: conversionError?.stack,
+    });
     cleanupPaths(workingDir, outputDir);
     res.status(500).json({ error: 'We could not convert this document. Please try another file.' });
   }
 });
 
 app.post('/api/convert/pdf-to-docx', upload.single('file'), async (req, res) => {
+  console.log('[convert] pdf-to-docx request', {
+    origin: req.get('origin'),
+    contentType: req.get('content-type'),
+    fileName: req.file?.originalname,
+    fileSize: req.file?.size,
+  });
+
   if (!req.file) {
     return res.status(400).json({ error: 'Please upload a PDF document.' });
   }
@@ -157,6 +193,10 @@ app.post('/api/convert/pdf-to-docx', upload.single('file'), async (req, res) => 
     res.on('close', () => cleanupPaths(workingDir, outputDir));
     res.download(outputPath, 'converted.docx');
   } catch (conversionError) {
+    console.error('[convert] pdf-to-docx failed', {
+      error: conversionError?.message,
+      stack: conversionError?.stack,
+    });
     cleanupPaths(workingDir, outputDir);
     res.status(500).json({ error: 'We could not convert this PDF to a DOCX file. Please try another document.' });
   }
@@ -196,4 +236,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   });
 }
 
-export { app, isSupportedUpload };
+export { app, isOriginAllowed, isSupportedUpload };

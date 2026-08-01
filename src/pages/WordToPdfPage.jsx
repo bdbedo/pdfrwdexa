@@ -75,10 +75,23 @@ function WordToPdfPage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    console.log('[frontend] word-to-pdf request', {
+      endpoint: '/api/convert/word-to-pdf',
+      apiUrl: getApiUrl('/api/convert/word-to-pdf'),
+      fileName: file.name,
+      fileSize: file.size,
+    });
+
     try {
       const response = await fetch(getApiUrl('/api/convert/word-to-pdf'), {
         method: 'POST',
         body: formData,
+      });
+
+      console.log('[frontend] word-to-pdf response', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('content-type'),
       });
 
       if (!response.ok) {
@@ -102,6 +115,7 @@ function WordToPdfPage() {
       setStatus('PDF ready for download');
       setIsSuccess(true);
     } catch (conversionError) {
+      console.error('[frontend] word-to-pdf failed', conversionError);
       setError(conversionError.message || 'We could not complete the conversion.');
       setStatus('Conversion failed');
       setProgress(0);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isSupportedUpload } from '../server.js';
+import { isOriginAllowed, isSupportedUpload } from '../server.js';
 
 test('accepts common MIME values for PDF uploads', () => {
   assert.equal(
@@ -22,4 +22,9 @@ test('accepts Word uploads even when MIME detection is imperfect', () => {
     isSupportedUpload({ originalname: 'sample.doc', mimetype: '' }),
     true,
   );
+});
+
+test('allows the production Vercel frontend origin', () => {
+  assert.equal(isOriginAllowed('https://pdfrwdexa.vercel.app'), true);
+  assert.equal(isOriginAllowed('https://example.com'), false);
 });

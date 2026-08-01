@@ -75,10 +75,23 @@ function PdfToWordPage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    console.log('[frontend] pdf-to-docx request', {
+      endpoint: '/api/convert/pdf-to-docx',
+      apiUrl: getApiUrl('/api/convert/pdf-to-docx'),
+      fileName: file.name,
+      fileSize: file.size,
+    });
+
     try {
       const response = await fetch(getApiUrl('/api/convert/pdf-to-docx'), {
         method: 'POST',
         body: formData,
+      });
+
+      console.log('[frontend] pdf-to-docx response', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('content-type'),
       });
 
       if (!response.ok) {
@@ -94,6 +107,7 @@ function PdfToWordPage() {
       setStatus('DOCX ready for download');
       setIsSuccess(true);
     } catch (conversionError) {
+      console.error('[frontend] pdf-to-docx failed', conversionError);
       setError(conversionError.message || 'We could not complete the conversion.');
       setStatus('Conversion failed');
       setProgress(0);

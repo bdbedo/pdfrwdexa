@@ -1,24 +1,43 @@
-export function setPageMeta({ title, description, canonicalPath }) {
+export function setPageMeta({ title, description, canonicalPath, ogImage = '/og-image.png' }) {
+  const siteUrl = 'https://pdfrwdexa.vercel.app';
+  const canonicalUrl = new URL(canonicalPath, siteUrl).toString();
+
+  const ensureMeta = (selector, attributes) => {
+    let element = document.querySelector(selector);
+    if (!element) {
+      element = document.createElement('meta');
+      Object.entries(attributes).forEach(([key, value]) => {
+        if (value) element.setAttribute(key, value);
+      });
+      document.head.appendChild(element);
+    }
+    return element;
+  };
+
   document.title = title;
 
-  const descriptionTag = document.querySelector('meta[name="description"]');
-  if (descriptionTag) {
-    descriptionTag.setAttribute('content', description);
-  }
+  const descriptionTag = ensureMeta('meta[name="description"]', { name: 'description' });
+  descriptionTag.setAttribute('content', description);
 
-  const ogTitleTag = document.querySelector('meta[property="og:title"]');
-  if (ogTitleTag) {
-    ogTitleTag.setAttribute('content', title);
-  }
+  const robotsTag = ensureMeta('meta[name="robots"]', { name: 'robots' });
+  robotsTag.setAttribute('content', 'index,follow');
 
-  const ogDescriptionTag = document.querySelector('meta[property="og:description"]');
-  if (ogDescriptionTag) {
-    ogDescriptionTag.setAttribute('content', description);
-  }
+  const ogTitleTag = ensureMeta('meta[property="og:title"]', { property: 'og:title' });
+  ogTitleTag.setAttribute('content', title);
 
-  const canonicalTag = document.querySelector('link[rel="canonical"]');
-  const canonicalUrl = `https://pdfrwdexa.example.com${canonicalPath}`;
-  if (canonicalTag) {
-    canonicalTag.setAttribute('href', canonicalUrl);
+  const ogDescriptionTag = ensureMeta('meta[property="og:description"]', { property: 'og:description' });
+  ogDescriptionTag.setAttribute('content', description);
+
+  const ogUrlTag = ensureMeta('meta[property="og:url"]', { property: 'og:url' });
+  ogUrlTag.setAttribute('content', canonicalUrl);
+
+  const ogImageTag = ensureMeta('meta[property="og:image"]', { property: 'og:image' });
+  ogImageTag.setAttribute('content', ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`);
+
+  const canonicalTag = document.querySelector('link[rel="canonical"]') || document.createElement('link');
+  canonicalTag.setAttribute('rel', 'canonical');
+  canonicalTag.setAttribute('href', canonicalUrl);
+  if (!canonicalTag.parentNode) {
+    document.head.appendChild(canonicalTag);
   }
 }

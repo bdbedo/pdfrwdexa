@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { setPageMeta } from '../seo';
 import { getApiUrl } from '../config';
-import { triggerHilltopAdsPopunder } from '../hilltopads';
 
 function PdfToWordPage() {
   useEffect(() => {
@@ -63,8 +62,6 @@ function PdfToWordPage() {
     if (!downloadUrl) {
       return;
     }
-
-    await triggerHilltopAdsPopunder();
 
     const link = document.createElement('a');
     link.href = downloadUrl;

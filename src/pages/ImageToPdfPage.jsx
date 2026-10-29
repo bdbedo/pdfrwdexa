@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { setPageMeta } from '../seo';
 import { getApiUrl } from '../config';
-import { triggerHilltopAdsPopunder } from '../hilltopads';
 
 function ImageToPdfPage() {
   useEffect(() => {
@@ -148,8 +147,6 @@ function ImageToPdfPage() {
     if (!downloadUrlRef.current) {
       return;
     }
-
-    await triggerHilltopAdsPopunder();
 
     const link = document.createElement('a');
     link.href = downloadUrlRef.current;

@@ -7,8 +7,8 @@ import { triggerHilltopAdsPopunder } from '../hilltopads';
 function ImageToPdfPage() {
   useEffect(() => {
     setPageMeta({
-      title: 'Image to PDF | PDFRWDEXA',
-      description: 'Convert JPG, JPEG and PNG images into a single PDF with layout and page options.',
+      title: 'Image to PDF Converter | PDFRWDEXA',
+      description: 'Convert JPG and PNG images to PDF online. Combine multiple images into one PDF file quickly and easily.',
       canonicalPath: '/image-to-pdf',
     });
   }, []);
@@ -265,7 +265,7 @@ function ImageToPdfPage() {
       <div className="panel tool-head">
         <div>
           <h1 id="image-to-pdf-title">Image → PDF</h1>
-          <p>Combine JPG, JPEG and PNG images into a single PDF with simple page and layout options.</p>
+          <p>Combine JPG, JPEG and PNG files into one polished PDF in just a few moments.</p>
         </div>
         <div className="status-box">{status}</div>
       </div>
@@ -370,8 +370,8 @@ function ImageToPdfPage() {
       </div>
 
       <div className="panel">
-        <h2 className="section-title">Privacy note</h2>
-        <p className="section-subtitle">Images are processed locally in your browser and are not uploaded to a remote server for this feature.</p>
+        <h2 className="section-title">When to use this tool</h2>
+        <p className="section-subtitle">Use it to combine scanned pages, photos, or images into one PDF document for sharing, printing or archiving.</p>
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-export function setPageMeta({ title, description, canonicalPath, ogImage = '/og-image.png' }) {
+export function setPageMeta({ title, description, canonicalPath, ogImage = '/og-image.svg' }) {
   const siteUrl = 'https://pdfrwdexa.vercel.app';
   const canonicalUrl = new URL(canonicalPath, siteUrl).toString();
 
@@ -31,8 +31,12 @@ export function setPageMeta({ title, description, canonicalPath, ogImage = '/og-
   const ogUrlTag = ensureMeta('meta[property="og:url"]', { property: 'og:url' });
   ogUrlTag.setAttribute('content', canonicalUrl);
 
+  const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
   const ogImageTag = ensureMeta('meta[property="og:image"]', { property: 'og:image' });
-  ogImageTag.setAttribute('content', ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`);
+  ogImageTag.setAttribute('content', ogImageUrl);
+
+  const twitterImageTag = ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' });
+  twitterImageTag.setAttribute('content', ogImageUrl);
 
   const canonicalTag = document.querySelector('link[rel="canonical"]') || document.createElement('link');
   canonicalTag.setAttribute('rel', 'canonical');

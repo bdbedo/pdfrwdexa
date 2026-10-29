@@ -6,8 +6,8 @@ import { triggerHilltopAdsPopunder } from '../hilltopads';
 function WordToPdfPage() {
   useEffect(() => {
     setPageMeta({
-      title: 'Word to PDF | PDFRWDEXA',
-      description: 'Convert Word documents to polished PDFs quickly, privately and without sign-up.',
+      title: 'Word to PDF Converter | PDFRWDEXA',
+      description: 'Convert Word to PDF online for free. Turn DOC and DOCX files into clean PDF documents in a few clicks.',
       canonicalPath: '/word-to-pdf',
     });
   }, []);
@@ -95,23 +95,10 @@ function WordToPdfPage() {
     const formData = new FormData();
     formData.append('file', file);
 
-    console.log('[frontend] word-to-pdf request', {
-      endpoint: '/api/convert/word-to-pdf',
-      apiUrl: getApiUrl('/api/convert/word-to-pdf'),
-      fileName: file.name,
-      fileSize: file.size,
-    });
-
     try {
       const response = await fetch(getApiUrl('/api/convert/word-to-pdf'), {
         method: 'POST',
         body: formData,
-      });
-
-      console.log('[frontend] word-to-pdf response', {
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get('content-type'),
       });
 
       if (!response.ok) {
@@ -130,12 +117,11 @@ function WordToPdfPage() {
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
       setDownloadUrl(objectUrl);
-      setDownloadName(`pdfwrdexa-${Date.now()}.pdf`);
+      setDownloadName(`pdfrwdexa-${Date.now()}.pdf`);
       setProgress(100);
       setStatus('PDF ready for download');
       setIsSuccess(true);
     } catch (conversionError) {
-      console.error('[frontend] word-to-pdf failed', conversionError);
       setError(conversionError.message || 'We could not complete the conversion.');
       setStatus('Conversion failed');
       setProgress(0);
@@ -164,7 +150,7 @@ function WordToPdfPage() {
       <div className="panel tool-head">
         <div>
           <h1 id="word-to-pdf-title">Word → PDF</h1>
-          <p>Convert Word documents into high-quality PDF files with a clean, focused experience.</p>
+          <p>Turn DOC and DOCX files into clean, ready-to-share PDF files in a few clicks.</p>
         </div>
         <div className="status-box">{status}</div>
       </div>
@@ -230,8 +216,8 @@ function WordToPdfPage() {
       </div>
 
       <div className="panel">
-        <h2 className="section-title">Privacy note</h2>
-        <p className="section-subtitle">Word documents are sent to a local conversion service in this environment and are not stored permanently.</p>
+        <h2 className="section-title">Why use this converter</h2>
+        <p className="section-subtitle">This tool is ideal when you need to send a document in a format that is easy to open, share and archive.</p>
       </div>
     </section>
   );

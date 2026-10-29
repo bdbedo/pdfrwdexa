@@ -6,8 +6,8 @@ import { triggerHilltopAdsPopunder } from '../hilltopads';
 function PdfToWordPage() {
   useEffect(() => {
     setPageMeta({
-      title: 'PDF to Word | PDFRWDEXA',
-      description: 'Convert PDF documents into editable Word files while preserving structure and layout as closely as possible.',
+      title: 'PDF to Word Converter | PDFRWDEXA',
+      description: 'Convert PDF to Word online for free. Extract text and structure into an editable DOCX file with a simple upload.',
       canonicalPath: '/pdf-to-word',
     });
   }, []);
@@ -95,23 +95,10 @@ function PdfToWordPage() {
     const formData = new FormData();
     formData.append('file', file);
 
-    console.log('[frontend] pdf-to-docx request', {
-      endpoint: '/api/convert/pdf-to-docx',
-      apiUrl: getApiUrl('/api/convert/pdf-to-docx'),
-      fileName: file.name,
-      fileSize: file.size,
-    });
-
     try {
       const response = await fetch(getApiUrl('/api/convert/pdf-to-docx'), {
         method: 'POST',
         body: formData,
-      });
-
-      console.log('[frontend] pdf-to-docx response', {
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get('content-type'),
       });
 
       if (!response.ok) {
@@ -127,7 +114,6 @@ function PdfToWordPage() {
       setStatus('DOCX ready for download');
       setIsSuccess(true);
     } catch (conversionError) {
-      console.error('[frontend] pdf-to-docx failed', conversionError);
       setError(conversionError.message || 'We could not complete the conversion.');
       setStatus('Conversion failed');
       setProgress(0);
@@ -156,7 +142,7 @@ function PdfToWordPage() {
       <div className="panel tool-head">
         <div>
           <h1 id="pdf-to-word-title">PDF → Word</h1>
-          <p>Convert PDF files into editable Word documents while preserving structure, spacing and layout as accurately as possible.</p>
+          <p>Turn PDF documents into editable Word files while keeping the layout as close as possible.</p>
         </div>
         <div className="status-box">{status}</div>
       </div>
@@ -222,8 +208,8 @@ function PdfToWordPage() {
       </div>
 
       <div className="panel">
-        <h2 className="section-title">Privacy note</h2>
-        <p className="section-subtitle">PDFs are processed locally in the conversion service and are not stored permanently.</p>
+        <h2 className="section-title">When to use this converter</h2>
+        <p className="section-subtitle">Use it when you need to edit a document, reuse content or convert a fillable PDF into a more editable Microsoft Word format.</p>
       </div>
     </section>
   );

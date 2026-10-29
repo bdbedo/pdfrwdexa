@@ -5,7 +5,7 @@ import { setPageMeta } from '../seo';
 const tools = [
   {
     title: 'Word → PDF',
-    description: 'Convert Word documents into high-quality PDF files.',
+    description: 'Convert Word documents into clean PDF files in a few clicks.',
     path: '/word-to-pdf',
     icon: '📄',
     formats: ['.doc', '.docx'],
@@ -13,7 +13,7 @@ const tools = [
   },
   {
     title: 'PDF → Word',
-    description: 'Convert PDF files into editable Word documents while preserving structure and layout.',
+    description: 'Turn PDF files into editable Word documents while preserving the structure as closely as possible.',
     path: '/pdf-to-word',
     icon: '📝',
     formats: ['.pdf'],
@@ -21,7 +21,7 @@ const tools = [
   },
   {
     title: 'Image → PDF',
-    description: 'Combine JPG, JPEG and PNG images into a polished PDF.',
+    description: 'Combine JPG, JPEG and PNG files into a single PDF file in seconds.',
     path: '/image-to-pdf',
     icon: '🖼️',
     formats: ['.jpg', '.jpeg', '.png'],
@@ -32,23 +32,23 @@ const tools = [
 const faqs = [
   {
     question: 'Do I need to create an account?',
-    answer: 'No. PDFRWDEXA is built for instant use without sign-up, login or email collection.',
+    answer: 'No. PDFRWDEXA is built for immediate use without sign-up, login or email collection.',
   },
   {
-    question: 'Are my files kept private?',
-    answer: 'Yes. Files are processed temporarily and intended for automatic deletion after handling.',
+    question: 'Is my file privacy protected?',
+    answer: 'The tool is designed for private, temporary handling. Files are processed for the conversion task and are not intended to be stored permanently.',
   },
   {
-    question: 'Is the conversion fully automated?',
-    answer: 'The frontend is ready for a real conversion engine and the experience is designed to support it cleanly.',
+    question: 'What file types are supported?',
+    answer: 'The main tools support DOC/DOCX uploads, PDF uploads, and JPG/JPEG/PNG image groups for PDF conversion.',
   },
 ];
 
 function HomePage() {
   useEffect(() => {
     setPageMeta({
-      title: 'PDFRWDEXA | Fast document conversion',
-      description: 'Convert Word, PDF and images quickly and securely without creating an account.',
+      title: 'PDFRWDEXA | Free PDF Converter Online',
+      description: 'Convert Word to PDF, PDF to Word, and JPG/PNG to PDF online for free. Simple, fast, and no sign-up required.',
       canonicalPath: '/',
     });
   }, []);
@@ -57,31 +57,31 @@ function HomePage() {
     <>
       <section className="hero">
         <div>
-          <div className="hero-badge">Privacy-first • no account required</div>
-          <h1>Convert your files. Keep your workflow simple.</h1>
-          <p>Convert Word documents, PDFs and images quickly and securely — without creating an account.</p>
+          <div className="hero-badge">Simple • free • no account required</div>
+          <h1>Convert your files without friction.</h1>
+          <p>PDFRWDEXA makes it easy to turn Word files into PDF, export PDF documents to Word, and combine images into one document in just a few steps.</p>
           <div className="hero-actions">
             <Link className="button-primary" to="/word-to-pdf">Start with Word → PDF</Link>
             <a className="button-secondary" href="#tools">Explore all tools</a>
           </div>
           <div className="trust-row" aria-label="Trust indicators">
             <div className="trust-pill">
-              <strong>Your files are private.</strong>
-              Temporary handling and secure processing.
+              <strong>Fast conversion.</strong>
+              Designed for quick uploads and straightforward downloads.
             </div>
             <div className="trust-pill">
-              <strong>No registration required.</strong>
-              Open the tool and start converting instantly.
+              <strong>No registration.</strong>
+              Start converting immediately without creating an account.
             </div>
             <div className="trust-pill">
-              <strong>Modern interface.</strong>
-              A premium experience built for clarity and speed.
+              <strong>Privacy-focused.</strong>
+              Built to keep the conversion workflow simple and temporary.
             </div>
           </div>
         </div>
         <div className="hero-panel">
-          <h2 className="section-title">Three focused conversion tools</h2>
-          <p className="section-subtitle">Each experience is designed to feel calm, confident and production-ready.</p>
+          <h2 className="section-title">Choose your conversion tool</h2>
+          <p className="section-subtitle">Use the right converter for your file type and task.</p>
           <div className="card-grid" id="tools">
             {tools.map((tool) => (
               <article className="tool-card" key={tool.title}>
@@ -99,24 +99,24 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section" aria-labelledby="how-it-works">
-        <h2 id="how-it-works" className="section-title">How it works</h2>
-        <p className="section-subtitle">A simple flow from upload to download in three short steps.</p>
+      <section className="section" aria-labelledby="why-use-pdfrwdexa">
+        <h2 id="why-use-pdfrwdexa" className="section-title">Why people use PDFRWDEXA</h2>
+        <p className="section-subtitle">Built for quick, practical document workflows without extra setup.</p>
         <div className="steps">
           <div className="step">
             <div className="step-number">1</div>
-            <h3>Select a tool</h3>
-            <p>Choose the conversion that matches your document type and workflow.</p>
+            <h3>Pick your tool</h3>
+            <p>Choose the document conversion that matches your file type and task.</p>
           </div>
           <div className="step">
             <div className="step-number">2</div>
             <h3>Upload your file</h3>
-            <p>Drop files into the upload area or browse from your device.</p>
+            <p>Drop files from your computer or browse locally to start instantly.</p>
           </div>
           <div className="step">
             <div className="step-number">3</div>
-            <h3>Convert and download</h3>
-            <p>Watch the progress, review the result and download your output instantly.</p>
+            <h3>Download the result</h3>
+            <p>Review the conversion status and save the final file without a complicated process.</p>
           </div>
         </div>
       </section>

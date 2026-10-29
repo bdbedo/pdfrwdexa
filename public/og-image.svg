@@ -1,9 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#07111f"/>
-  <rect x="88" y="88" width="1024" height="454" rx="38" fill="#101c31" stroke="#2a3655" stroke-width="4"/>
-  <path d="M208 244h200a56 56 0 0 1 56 56v88a56 56 0 0 1-56 56H208z" fill="#44d4b6"/>
-  <path d="M260 292h112v40H260zM260 356h96v40H260z" fill="#06131e"/>
-  <path d="M472 244h164l90 90v144H472z" fill="#6f78ff"/>
-  <text x="208" y="478" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="700">PDFRWDEXA</text>
-  <text x="208" y="530" fill="#9fb0c5" font-family="Inter, Arial, sans-serif" font-size="30">Fast, reliable document conversion</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">PDFRWDEXA</title>
+  <desc id="desc">PDF converter banner</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#07111f"/>
+      <stop offset="100%" stop-color="#0d1b2c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="80" y="90" width="1040" height="450" rx="28" fill="#101c31" stroke="#2d4b7a" stroke-width="4"/>
+  <rect x="160" y="180" width="160" height="180" rx="18" fill="#44d4b6" opacity="0.95"/>
+  <rect x="196" y="228" width="88" height="12" rx="4" fill="#06131e"/>
+  <rect x="196" y="258" width="72" height="12" rx="4" fill="#06131e"/>
+  <rect x="196" y="288" width="78" height="12" rx="4" fill="#06131e"/>
+  <rect x="360" y="180" width="260" height="190" rx="18" fill="#6f78ff" opacity="0.9"/>
+  <path d="M416 222h146v20H416zm0 46h110v20H416zm0 46h126v20H416z" fill="#e8f1ff" opacity="0.9"/>
+  <text x="160" y="470" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="700">PDFRWDEXA</text>
+  <text x="160" y="522" fill="#9fb0c5" font-family="Inter, Arial, sans-serif" font-size="28">Free PDF conversion tools for everyday document work</text>
 </svg>
